@@ -162,7 +162,7 @@
                 if(data) {
                     toggleLiveStatus(true);
                     // console.log(data);
-                    const lastUpatedTs = data.channel.updated_at ? dayjs(data.channel.updated_at).utc().format('DD/MM/YYYY h:mm A') : '---';
+                    const lastUpatedTs = data.channel.updated_at ? dayjs(data.channel.updated_at).utc().format('DD/MM/YYYY hh:mm:ss A') : '---';
                     if(data.feeds.length > 0) {
                         const lat = data.feeds[0].field1;
                         const long = data.feeds[0].field2;
