@@ -51,7 +51,7 @@
                     <div class="col-md-6 no-mb ps-md-5">
                         <p>
                             <i class="fa-solid fa-address-card me-2" style="color: #ffffff;"></i>
-                            Name: <span id="name">Yuvaprakash C</span>
+                            Name: <span id="name">ABC</span>
                         </p>
                         <p>
                             <i class="fa-solid fa-calendar-days me-2" style="color: #ffffff;"></i>
@@ -128,21 +128,20 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
 
     <script>
 
-        // // development
-        // const currentTime = new Date().toLocaleTimeString();
-        // document.getElementById('timeStamp').textContent = currentTime;
-        // document.getElementById('temp').textContent = 25;
-        // document.getElementById('heart').textContent = 85;
+        $(document).ready(() => {
+            getEspData();          
+        });
 
         var temperatureData = [];
         var heartRateData = [];
         var timeLabels = [];
         var gpsPoints = [];
         var polyline, marker;
-        let url = '';
+        let url = 'https://api.thingspeak.com/channels/2815203/feeds.json?api_key=QKBK3Q0KY4QL5V8B&results=1';
 
         const temperatureChart = createTempChart();
         const heartRateChart = createHeartRateChart();
@@ -155,8 +154,6 @@
         // attribution.setPrefix(false);
         // attribution.removeAttribution();
 
-        getEspData();
-
         async function getEspData() {
             try {
                 const response = await fetch(url);
@@ -164,21 +161,30 @@
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
                 const data = await response.json();
-                updateLiveStatus(true);
-                console.log(data);
-
-                // updateMapView();
-                // updateChartView();
-                // updateValues();
-
+                if(data) {
+                    toggleLiveStatus(true);
+                    // console.log(data);
+                    const lastUpatedTs = data.channel.updated_at ? new Date(data.channel.updated_at).toLocaleString() : '---';
+                    if(data.feeds.length > 0) {
+                        const lat = data.feeds[0].field1;
+                        const long = data.feeds[0].field2;
+                        const temp = data.feeds[0].field5;
+                        const heart = data.feeds[0].field3;
+                        updateMap([lat, long]);
+                        updateCharts(temp, heart);
+                        updateTextContent(temp, heart, lastUpatedTs);
+                    } else {
+                        updateTextContent('---', '---', lastUpatedTs);
+                    }
+                }
             } catch (error) {
-                updateLiveStatus(false);
+                toggleLiveStatus(false);
                 console.error('Fetch error:', error.message);
             }
         }
 
         function createHeartRateChart() {
-            const heartChartEle = document.getElementById('heartRate-chart');
+            const heartChartEle = $('#heartRate-chart');
             return new Chart(heartChartEle, {
                 type: 'line',
                 data: {
@@ -186,8 +192,8 @@
                     datasets: [{
                         label: 'Heart Rate (BPM)',
                         data: heartRateData,
-                        borderColor: '#007BFF',
-                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        borderColor: '#ff0000',
+                        backgroundColor: '#ffd7d7',
                         fill: true,
                         tension: 0.3,
                     }]
@@ -222,7 +228,7 @@
         }
 
         function createTempChart() {
-            const tempChartEle = document.getElementById('temperature-chart');
+            const tempChartEle = $('#temperature-chart');
             return new Chart(tempChartEle, {
                 type: 'line',
                 data: {
@@ -264,9 +270,9 @@
             });
         }
 
-        function updateChartView(temperature, heartRate) {
+        function updateCharts(temperature, heartRate) {
+            // need to pass time date from response
             const currentTime = new Date().toLocaleTimeString();
-            document.getElementById('timeStamp').textContent = currentTime;
             timeLabels.push(currentTime);
             temperatureData.push(temperature);
             temperatureChart.update();
@@ -274,18 +280,18 @@
             heartRateChart.update();
         }
 
-        function updateLiveStatus(liveStatus) {
-            document.getElementById('liveStatus').hidden = !liveStatus;
+        function toggleLiveStatus(isLive) {
+            isLive ? $('#liveStatus').show() : $('#liveStatus').hide();
         }
 
-        function updateValues(temperature, heartRate) {
-            const currentTime = new Date().toLocaleTimeString();
-            document.getElementById('timeStamp').textContent = currentTime;
-            document.getElementById('temp').textContent = temperature;
-            document.getElementById('heart').textContent = heartRate;
+        function updateTextContent(temperature, heartRate, updateTimeStamp) {
+            // const currentTime = new Date().toLocaleTimeString();
+            $('#timeStamp').text(updateTimeStamp);
+            $('#temp').text(temperature);
+            $('#heart').text(heartRate);           
         }
 
-        function updateMapView(gps) {
+        function updateMap(gps) {
             gpsPoints.push(gps);
             if(polyline) map.removeLayer(polyline);
             polyline = L.polyline(gpsPoints, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
