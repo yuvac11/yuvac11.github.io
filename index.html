@@ -135,7 +135,10 @@
     <script>
         dayjs.extend(dayjs_plugin_utc);
         $(document).ready(() => {
-            getEspData();          
+            getEspData();
+            setInterval(() => {
+                getEspData(); 
+            }, 3000)         
         });
 
         var temperatureData = [];
@@ -159,17 +162,18 @@
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
-                const data = await response.json();
+                const data = await response.json(); 
                 if(data) {
                     toggleLiveStatus(true);
-                    // console.log(data);
-                    const lastUpatedTs = data.channel.updated_at ? dayjs(data.channel.updated_at).utc().format('DD/MM/YYYY hh:mm:ss A') : '---';
                     if(data.feeds.length > 0) {
+                        console.log('loop called', data.feeds[0].created_at);
+                        
+                        const lastUpatedTs = data.feeds[0].created_at ? dayjs(data.feeds[0].created_at).format('DD/MM/YYYY hh:mm:ss A') : '---';
                         const lat = data.feeds[0].field1;
                         const long = data.feeds[0].field2;
                         const temp = data.feeds[0].field5;
                         const heart = data.feeds[0].field3;
-                        updateMap([lat, long]);
+                        if (parseInt(lat) > 0 && parseInt(long) > 0) updateMap([lat, long]);
                         updateCharts(temp, heart);
                         updateTextContent(temp, heart, lastUpatedTs);
                     } else {
@@ -295,7 +299,7 @@
             if(polyline) map.removeLayer(polyline);
             polyline = L.polyline(gpsPoints, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
             if(marker) map.removeLayer(marker);
-            marker = L.marker([lat, long]).addTo(map);
+            marker = L.marker([gps[0], gps[1]]).addTo(map);
             map.fitBounds(polyline.getBounds());
         }
 
