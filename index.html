@@ -166,8 +166,6 @@
                 if(data) {
                     toggleLiveStatus(true);
                     if(data.feeds.length > 0) {
-                        console.log('loop called', data.feeds[0].created_at);
-                        
                         const lastUpatedTs = data.feeds[0].created_at ? dayjs(data.feeds[0].created_at).format('DD/MM/YYYY hh:mm:ss A') : '---';
                         const lat = data.feeds[0].field1;
                         const long = data.feeds[0].field2;
