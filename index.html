@@ -173,7 +173,7 @@
                         const long = data.feeds[0].field2;
                         const temp = data.feeds[0].field5;
                         const heart = data.feeds[0].field3;
-                        if (parseInt(lat) > 0 && parseInt(long) > 0) updateMap([lat, long]);
+                        updateMap([lat, long]);
                         updateCharts(temp, heart);
                         updateTextContent(temp, heart, lastUpatedTs);
                     } else {
