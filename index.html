@@ -129,6 +129,7 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
 
     <script>
 
@@ -164,7 +165,7 @@
                 if(data) {
                     toggleLiveStatus(true);
                     // console.log(data);
-                    const lastUpatedTs = data.channel.updated_at ? new Date(data.channel.updated_at).toLocaleString() : '---';
+                    const lastUpatedTs = data.channel.updated_at ? dayjs(data.channel.updated_at).format('DD/MM/YYYY h:mm A') : '---';
                     if(data.feeds.length > 0) {
                         const lat = data.feeds[0].field1;
                         const long = data.feeds[0].field2;
