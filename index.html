@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <style>
+        .row:not(.no-mb), .col-md-6:not(.no-mb) {
+            margin-bottom: 25px;
+        }
+        #map { 
+            height: 400px; 
+        }
+        #temperature-chart, #heartRate-chart {
+            width: 100%;
+            height: 350px;
+        }
+        .details-container {
+            background-color: #a730e5;
+            /* background-image: linear-gradient(-225deg, #AC32E4 0%, #7918F2 48%, #4801FF 100%); */
+            color: white;
+        }
+        body {
+            background-image: linear-gradient(-225deg, #E3FDF5 0%, #FFE6FA 100%);
+        }
+        h3 {
+            margin-bottom: 0px;
+        }
+        .leaflet-attribution-flag {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <div class="container-fluid pb-4">
+        <div class="row pt-3 px-2 px-md-5">
+            <div class="col-12 d-flex align-items-center justify-content-between">
+                <img width="150px" src="https://i.ibb.co/KzgfLtS/transparent.png" alt="">
+                <span id="liveStatus" class="fw-medium text-secondary">
+                    <i class="fa-solid fa-location-dot me-1" style="color: red;"></i>
+                    Live
+                </span>
+            </div>
+        </div>
+        <div class="row pt-3">
+            <div class="col-md-10 mx-auto ps-3 fs-6 fw-medium py-5 py-md-4 rounded-4 details-container">
+                <div class="row no-mb">
+                    <div class="col-md-6 no-mb ps-md-5">
+                        <p>
+                            <i class="fa-solid fa-address-card me-2" style="color: #ffffff;"></i>
+                            Name: <span id="name">Yuvaprakash C</span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-calendar-days me-2" style="color: #ffffff;"></i>
+                            Age: <span id="age">10</span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-venus-mars me-2" style="color: #ffffff;"></i>
+                            Sex: <span id="sex">Male</span>
+                        </p>
+                    </div>
+                    <div class="col-md-6 no-mb ps-md-5">
+                        <p>
+                            <i class="fa-solid fa-location-dot me-2" style="color: #ffffff;"></i>
+                            Location: <span id="location">Trichy</span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-phone me-2" style="color: #ffffff;"></i>
+                            Veterinarian Contact: <span id="vetContact">1234567890</span>
+                        </p>
+                        <p>
+                            <i class="fa-solid fa-phone me-2" style="color: #ffffff;"></i>
+                            Keeper Contact: <span id="keepContact">1234567890</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row pt-3 text-center">
+            <div class="col-md-6 text-md-end">
+                <h3 class="pe-md-3">
+                    <i class="fa-solid fa-temperature-low me-2" style="color: rgb(0, 132, 255);"></i>
+                    <span id="temp">---</span>°C
+                </h3>
+            </div>
+            <div class="col-md-6 no-mb text-md-start">
+                <h3 class="ps-md-3">
+                    <i class="fa-solid fa-heart-pulse" style="color: #ff0000;"></i>
+                    <span id="heart">---</span> BPM
+                </h3>
+            </div>
+        </div>
+        <div class="row fs-6 text-secondary text-center">
+            <p>Last updated on: <span id="timeStamp">---</span></p>
+        </div>
+        <div class="row">
+            <div class="col-md-10 mx-auto">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div id="map" class="rounded-2 border border-2 shadow-sm"></div>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-2 border border-2 shadow-sm">
+                            <div class="p-2 p-md-3">
+                                <canvas id="temperature-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="bg-white rounded-2 border border-2 shadow-sm">
+                            <div class="p-2 p-md-3">
+                                <canvas id="heartRate-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
+    <script>
+
+        // // development
+        // const currentTime = new Date().toLocaleTimeString();
+        // document.getElementById('timeStamp').textContent = currentTime;
+        // document.getElementById('temp').textContent = 25;
+        // document.getElementById('heart').textContent = 85;
+
+        var temperatureData = [];
+        var heartRateData = [];
+        var timeLabels = [];
+        var gpsPoints = [];
+        var polyline, marker;
+        let url = '';
+
+        const temperatureChart = createTempChart();
+        const heartRateChart = createHeartRateChart();
+        var map = L.map('map').setView([20.5937, 78.9629], 5);
+        var osm = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+        // var attribution = L.control.attribution().addTo(map);
+        // attribution.setPrefix(false);
+        // attribution.removeAttribution();
+
+        getEspData();
+
+        async function getEspData() {
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const data = await response.json();
+                updateLiveStatus(true);
+                console.log(data);
+
+                // updateMapView();
+                // updateChartView();
+                // updateValues();
+
+            } catch (error) {
+                updateLiveStatus(false);
+                console.error('Fetch error:', error.message);
+            }
+        }
+
+        function createHeartRateChart() {
+            const heartChartEle = document.getElementById('heartRate-chart');
+            return new Chart(heartChartEle, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Heart Rate (BPM)',
+                        data: heartRateData,
+                        borderColor: '#007BFF',
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time',
+                                color: '#555'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Heart Rate (BPM)',
+                                color: '#555'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+        }
+
+        function createTempChart() {
+            const tempChartEle = document.getElementById('temperature-chart');
+            return new Chart(tempChartEle, {
+                type: 'line',
+                data: {
+                    labels: timeLabels,
+                    datasets: [{
+                        label: 'Temperature (°C)',
+                        data: temperatureData,
+                        borderColor: '#007BFF',
+                        backgroundColor: 'rgba(0, 123, 255, 0.2)',
+                        fill: true,
+                        tension: 0.3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Time',
+                                color: '#555'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Temperature (°C)',
+                                color: '#555'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateChartView(temperature, heartRate) {
+            const currentTime = new Date().toLocaleTimeString();
+            document.getElementById('timeStamp').textContent = currentTime;
+            timeLabels.push(currentTime);
+            temperatureData.push(temperature);
+            temperatureChart.update();
+            heartRateData.push(heartRate);
+            heartRateChart.update();
+        }
+
+        function updateLiveStatus(liveStatus) {
+            document.getElementById('liveStatus').hidden = !liveStatus;
+        }
+
+        function updateValues(temperature, heartRate) {
+            const currentTime = new Date().toLocaleTimeString();
+            document.getElementById('timeStamp').textContent = currentTime;
+            document.getElementById('temp').textContent = temperature;
+            document.getElementById('heart').textContent = heartRate;
+        }
+
+        function updateMapView(gps) {
+            gpsPoints.push(gps);
+            if(polyline) map.removeLayer(polyline);
+            polyline = L.polyline(gpsPoints, { color: 'blue', weight: 4, opacity: 0.7 }).addTo(map);
+            if(marker) map.removeLayer(marker);
+            marker = L.marker([lat, long]).addTo(map);
+            map.fitBounds(polyline.getBounds());
+        }
+
+    </script>
+
+</body>
+</html>
